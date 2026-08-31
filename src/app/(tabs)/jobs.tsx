@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useMemo, useState } from 'react';
+import { type Href, useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View } from 'react-native';
 
 import { VacancyCard } from '@/components/cards/vacancy-card';
@@ -10,12 +11,14 @@ import { SpecialtyPicker } from '@/components/specialty-picker';
 import { AppText } from '@/components/ui/app-text';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useVacancyFeed } from '@/hooks/use-vacancy-feed';
+import { useSavedVacancyStatuses } from '@/hooks/use-saved-vacancy-statuses';
 import { useAppStore } from '@/store/use-app-store';
 import { radii } from '@/theme/palette';
 import type { Specialty, Vacancy } from '@/types/domain';
 
 export default function JobsScreen() {
   const { colors } = useAppTheme();
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [specialty, setSpecialty] = useState<Specialty | 'Все'>('Все');
   const [savedOnly, setSavedOnly] = useState(false);
@@ -27,10 +30,14 @@ export default function JobsScreen() {
     limit: 20,
   }), [query, specialty]);
   const feed = useVacancyFeed(feedQuery);
+  const savedStatuses = useSavedVacancyStatuses();
+  const statusMap = useMemo(() => new Map(savedStatuses.items.map((item) => [item.vacancyId, item])), [savedStatuses.items]);
 
   const data = useMemo(() => {
-    return feed.items.filter((item) => !savedOnly || savedVacancyIds.includes(item.id));
-  }, [feed.items, savedOnly, savedVacancyIds]);
+    if (!savedOnly) return feed.items;
+    const fromStatuses = savedStatuses.items.flatMap((item) => item.vacancy ? [item.vacancy] : []);
+    return [...new Map([...feed.items, ...fromStatuses].filter((item) => savedVacancyIds.includes(item.id)).map((item) => [item.id, item])).values()];
+  }, [feed.items, savedOnly, savedStatuses.items, savedVacancyIds]);
 
   const selectSpecialty = useCallback((value: Specialty | 'Все') => {
     setSpecialty(value);
@@ -48,10 +55,11 @@ export default function JobsScreen() {
           vacancy={item}
           saved={savedVacancyIds.includes(item.id)}
           onToggleSaved={toggleVacancySaved}
+          status={statusMap.get(item.id)?.status}
         />
       </View>
     ),
-    [savedVacancyIds, toggleVacancySaved],
+    [savedVacancyIds, statusMap, toggleVacancySaved],
   );
   const keyExtractor = useCallback((item: Vacancy) => item.id, []);
 
@@ -117,6 +125,17 @@ export default function JobsScreen() {
           Найдено: {data.length}
         </AppText>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Открыть сохранённые поиски вакансий"
+        android_ripple={{ color: colors.overlay }}
+        onPress={() => router.push({ pathname: '/vacancy-searches', params: { query, ...(specialty === 'Все' ? {} : { specialty }) } } as Href)}
+        style={({ pressed }) => [styles.smartSearch, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}>
+        <View style={[styles.smartIcon, { backgroundColor: colors.accentSoft }]}><Ionicons name="notifications-outline" size={21} color={colors.accent} /></View>
+        <View style={styles.noticeText}><AppText variant="label">Сохранить поиск и получать новые</AppText><AppText variant="caption" color="muted">Без повторов, с интервалом 6 часов, день или неделю.</AppText></View>
+        <Ionicons name="chevron-forward" size={21} color={colors.accent} />
+      </Pressable>
+      {savedStatuses.error ? <View style={[styles.statusError, { backgroundColor: colors.warmSoft }]}><AppText variant="caption" style={{ color: colors.warning }}>{savedStatuses.error}</AppText></View> : null}
       <View style={[styles.notice, { backgroundColor: feed.error || feed.stale ? colors.warmSoft : colors.accentSoft }]}>
         <Ionicons
           name={feed.error ? 'cloud-offline-outline' : feed.stale ? 'time-outline' : 'shield-checkmark-outline'}
@@ -224,6 +243,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
   },
+  smartSearch: { marginHorizontal: 20, marginBottom: 14, minHeight: 72, padding: 12, borderWidth: 1, borderRadius: radii.md, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  smartIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  statusError: { marginHorizontal: 20, marginBottom: 12, padding: 12, borderRadius: radii.md },
   noticeText: { flex: 1, gap: 8 },
   footerLoader: { paddingVertical: 24 },
   empty: { paddingHorizontal: 20, paddingVertical: 36, gap: 8 },

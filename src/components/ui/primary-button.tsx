@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -13,15 +13,20 @@ type PrimaryButtonProps = {
   icon?: IconName;
   onPress: () => void;
   secondary?: boolean;
+  loading?: boolean;
+  disabled?: boolean;
 };
 
-export function PrimaryButton({ label, icon, onPress, secondary = false }: PrimaryButtonProps) {
+export function PrimaryButton({ label, icon, onPress, secondary = false, loading = false, disabled = false }: PrimaryButtonProps) {
   const { colors } = useAppTheme();
+  const inactive = disabled || loading;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled: inactive, busy: loading }}
       android_ripple={{ color: colors.overlay }}
+      disabled={inactive}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
@@ -30,8 +35,9 @@ export function PrimaryButton({ label, icon, onPress, secondary = false }: Prima
           borderColor: secondary ? colors.accent : colors.accent,
         },
         pressed && styles.pressed,
+        inactive && styles.disabled,
       ]}>
-      {icon ? (
+      {loading ? <ActivityIndicator size="small" color={secondary ? colors.accentText : '#FFFFFF'} /> : icon ? (
         <Ionicons name={icon} size={20} color={secondary ? colors.accentText : '#FFFFFF'} />
       ) : null}
       <AppText
@@ -55,4 +61,5 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pressed: { opacity: 0.76 },
+  disabled: { opacity: 0.58 },
 });

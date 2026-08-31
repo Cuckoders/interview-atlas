@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { specialties } from './domain.js';
 import type { AccountService } from './services/account-service.js';
 import type { PreparationService } from './services/preparation-service.js';
+import type { VacancyIntelligenceService } from './services/vacancy-intelligence-service.js';
 
 const email = z.string().trim().email().max(254).transform((value) => value.toLowerCase());
 const password = z.string().min(10).max(128);
@@ -23,7 +24,12 @@ const progressAction = z.discriminatedUnion('type', [
 ]);
 const actionBatch = z.object({ actions: z.array(progressAction).max(100) });
 
-export async function registerAccountRoutes(app: FastifyInstance, service: AccountService, preparation: PreparationService): Promise<void> {
+export async function registerAccountRoutes(
+  app: FastifyInstance,
+  service: AccountService,
+  preparation: PreparationService,
+  intelligence: VacancyIntelligenceService,
+): Promise<void> {
   app.post('/v1/auth/register', { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } }, async (request, reply) => {
     noStore(reply);
     const result = await service.register(register.parse(request.body));
@@ -56,7 +62,10 @@ export async function registerAccountRoutes(app: FastifyInstance, service: Accou
   app.get('/v1/account/export', async (request, reply) => {
     noStore(reply);
     const { user } = await authenticate(request, service);
-    return service.exportData(user, { preparation: await preparation.snapshot(user.id) });
+    return service.exportData(user, {
+      preparation: await preparation.snapshot(user.id),
+      vacancyIntelligence: await intelligence.exportData(user.id),
+    });
   });
 
   app.delete('/v1/account', { config: { rateLimit: { max: 3, timeWindow: '1 hour' } } }, async (request, reply) => {

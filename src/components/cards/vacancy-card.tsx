@@ -9,15 +9,17 @@ import { IconButton } from '@/components/ui/icon-button';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { radii } from '@/theme/palette';
 import type { Vacancy } from '@/types/domain';
+import type { SavedVacancyStatus } from '@/types/vacancy-intelligence';
 import { formatTimestamp } from '@/utils/date';
 
 type VacancyCardProps = {
   vacancy: Vacancy;
   saved: boolean;
   onToggleSaved: (id: string) => void;
+  status?: SavedVacancyStatus['status'];
 };
 
-function VacancyCardComponent({ vacancy, saved, onToggleSaved }: VacancyCardProps) {
+function VacancyCardComponent({ vacancy, saved, onToggleSaved, status }: VacancyCardProps) {
   const { colors } = useAppTheme();
   const router = useRouter();
   const open = useCallback(() => {
@@ -51,6 +53,14 @@ function VacancyCardComponent({ vacancy, saved, onToggleSaved }: VacancyCardProp
         <View style={styles.heading}>
           <AppText variant="subtitle">{vacancy.title}</AppText>
           <AppText color="secondary">{vacancy.company}</AppText>
+          {status && status !== 'active' ? (
+            <View style={[styles.status, { backgroundColor: colors.warmSoft }]}>
+              <Ionicons name={status === 'changed' ? 'create-outline' : 'close-circle-outline'} size={16} color={colors.warning} />
+              <AppText variant="caption" style={{ color: colors.warning }}>
+                {status === 'changed' ? 'Условия изменились' : 'Вакансия закрыта или снята'}
+              </AppText>
+            </View>
+          ) : null}
         </View>
         {vacancy.salary ? (
           <AppText variant="label" color="accent">
@@ -91,6 +101,7 @@ const styles = StyleSheet.create({
   sourceDot: { width: 8, height: 8, borderRadius: 4 },
   content: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 18, gap: 12 },
   heading: { gap: 3 },
+  status: { alignSelf: 'flex-start', marginTop: 5, paddingHorizontal: 9, minHeight: 30, borderRadius: 15, flexDirection: 'row', alignItems: 'center', gap: 5 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   footer: { minHeight: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   location: { flexDirection: 'row', alignItems: 'center', gap: 5 },

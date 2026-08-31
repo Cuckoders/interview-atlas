@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 
 import { DetailLayout, MissingDetail } from '@/components/detail-layout';
@@ -10,6 +10,7 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { vacancies } from '@/data/mock-data';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useVacancyDetail } from '@/hooks/use-vacancy-detail';
+import { useSavedVacancyStatuses } from '@/hooks/use-saved-vacancy-statuses';
 import { useAppStore } from '@/store/use-app-store';
 import { radii } from '@/theme/palette';
 import { formatTimestamp } from '@/utils/date';
@@ -21,13 +22,16 @@ export function generateStaticParams() {
 export default function VacancyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useAppTheme();
+  const router = useRouter();
   const { vacancy, loading } = useVacancyDetail(id);
+  const statuses = useSavedVacancyStatuses();
   const savedVacancyIds = useAppStore((state) => state.savedVacancyIds);
   const toggleVacancySaved = useAppStore((state) => state.toggleVacancySaved);
 
   if (loading) return <DetailLayout><ActivityIndicator color={colors.accent} /></DetailLayout>;
   if (!vacancy) return <MissingDetail title="Вакансия не найдена" />;
   const saved = savedVacancyIds.includes(vacancy.id);
+  const savedStatus = statuses.items.find((item) => item.vacancyId === vacancy.id);
   const toggleSaved = () => {
     toggleVacancySaved(vacancy.id);
     void Haptics.selectionAsync();
@@ -44,6 +48,16 @@ export default function VacancyDetailScreen() {
           {vacancy.source} · опубликовано {formatTimestamp(vacancy.publishedAt)}
         </AppText>
       </View>
+      {savedStatus && savedStatus.status !== 'active' ? (
+        <View style={[styles.statusNotice, { backgroundColor: colors.warmSoft }]}>
+          <Ionicons name={savedStatus.status === 'changed' ? 'create-outline' : 'close-circle-outline'} size={22} color={colors.warning} />
+          <View style={{ flex: 1, gap: 4 }}><AppText variant="label" style={{ color: colors.warning }}>
+            {savedStatus.status === 'changed' ? 'Работодатель изменил вакансию' : 'Вакансия закрыта или снята'}</AppText>
+            <AppText variant="caption" color="secondary">{savedStatus.status === 'changed'
+              ? `Изменено: ${savedStatus.changedFields.join(', ')}. Проверьте новые условия.`
+              : 'Сохранён последний известный снимок и ссылка на источник.'}</AppText></View>
+        </View>
+      ) : null}
       <View style={styles.heading}>
         <AppText variant="display">{vacancy.title}</AppText>
         <AppText variant="subtitle" color="secondary">
@@ -84,6 +98,10 @@ export default function VacancyDetailScreen() {
         </View>
       </View>
       <PrimaryButton label="Открыть у источника" icon="open-outline" onPress={openSource} />
+      {savedStatus?.status === 'changed' ? <PrimaryButton label="Изменения просмотрены" icon="checkmark-outline"
+        onPress={() => { void statuses.acknowledge(vacancy.id); }} secondary /> : null}
+      {savedStatus?.status !== 'closed' ? <PrimaryButton label="Проверить совпадение и пробелы" icon="analytics-outline"
+        onPress={() => router.push({ pathname: '/vacancy-match/[id]', params: { id: vacancy.id } } as Href)} secondary /> : null}
       <PrimaryButton
         label={saved ? 'Убрать из сохранённых' : 'Сохранить вакансию'}
         icon={saved ? 'bookmark' : 'bookmark-outline'}
@@ -102,4 +120,5 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: { gap: 10 },
   provenance: { padding: 16, borderWidth: 1, borderRadius: radii.md, flexDirection: 'row', gap: 11 },
+  statusNotice: { padding: 15, borderRadius: radii.md, flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
 });

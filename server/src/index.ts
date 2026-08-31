@@ -19,6 +19,10 @@ import { MemoryPreparationRepository } from './repositories/memory-preparation-r
 import { PostgresPreparationRepository } from './repositories/postgres-preparation-repository.js';
 import type { PreparationRepository } from './repositories/preparation-repository.js';
 import { PreparationService } from './services/preparation-service.js';
+import { MemoryVacancyIntelligenceRepository } from './repositories/memory-vacancy-intelligence-repository.js';
+import { PostgresVacancyIntelligenceRepository } from './repositories/postgres-vacancy-intelligence-repository.js';
+import type { VacancyIntelligenceRepository } from './repositories/vacancy-intelligence-repository.js';
+import { VacancyIntelligenceService } from './services/vacancy-intelligence-service.js';
 
 const config = loadConfig();
 const repository: VacancyRepository = config.databaseUrl
@@ -37,7 +41,13 @@ const preparationRepository: PreparationRepository = config.databaseUrl
   ? new PostgresPreparationRepository(config.databaseUrl)
   : new MemoryPreparationRepository();
 const preparationService = new PreparationService(preparationRepository);
-const app = await buildApp(config, service, contentService, accountService, preparationService);
+const intelligenceRepository: VacancyIntelligenceRepository = config.databaseUrl
+  ? new PostgresVacancyIntelligenceRepository(config.databaseUrl)
+  : new MemoryVacancyIntelligenceRepository();
+const intelligenceService = new VacancyIntelligenceService(
+  intelligenceRepository, service, accountService, preparationService,
+);
+const app = await buildApp(config, service, contentService, accountService, preparationService, intelligenceService);
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'graceful shutdown');

@@ -31,6 +31,8 @@ export class MemoryVacancyRepository implements VacancyRepository {
     return this.items.size;
   }
 
+  remove(id: string): void { this.items.delete(id); }
+
   async close(): Promise<void> {}
 }
 

@@ -4,6 +4,8 @@ import { vacancies } from '@/data/mock-data';
 import { apiVacancyRepository } from '@/services/api-vacancy-repository';
 import { cacheVacancy, readCachedVacancy } from '@/services/vacancy-cache';
 import type { Vacancy } from '@/types/domain';
+import { readCachedStatuses } from '@/services/vacancy-intelligence-cache';
+import { getMemoryAccountId } from '@/services/session-memory';
 
 export function useVacancyDetail(id?: string) {
   const [state, setState] = useState<{ id?: string; vacancy: Vacancy | null | undefined }>(() => ({
@@ -16,7 +18,9 @@ export function useVacancyDetail(id?: string) {
     const controller = new AbortController();
     if (!id) return;
     void (async () => {
-      const cached = await readCachedVacancy(id);
+      const accountId = getMemoryAccountId();
+      const statusVacancy = accountId ? (await readCachedStatuses(accountId))?.find((item) => item.vacancyId === id)?.vacancy : null;
+      const cached = await readCachedVacancy(id) ?? statusVacancy ?? null;
       if (!cancelled && cached) setState({ id, vacancy: cached });
       try {
         const live = await apiVacancyRepository.byId(id, controller.signal);
