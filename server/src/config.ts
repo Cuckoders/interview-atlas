@@ -10,6 +10,8 @@ const envSchema = z.object({
   SOURCE_REFRESH_MS: z.coerce.number().int().min(60_000).max(86_400_000).default(900_000),
   SOURCE_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(60_000).default(25_000),
   CMS_ADMIN_TOKEN: z.string().min(32).max(256).optional(),
+  AUTH_ACCESS_TTL_MS: z.coerce.number().int().min(60_000).max(86_400_000).default(900_000),
+  AUTH_REFRESH_TTL_MS: z.coerce.number().int().min(86_400_000).max(7_776_000_000).default(2_592_000_000),
 });
 
 export type AppConfig = {
@@ -22,6 +24,8 @@ export type AppConfig = {
   sourceRefreshMs: number;
   sourceTimeoutMs: number;
   cmsAdminToken?: string;
+  authAccessTtlMs: number;
+  authRefreshTtlMs: number;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -34,6 +38,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     allowedOrigins: parsed.ALLOWED_ORIGINS.split(',').map((item) => item.trim()).filter(Boolean),
     sourceRefreshMs: parsed.SOURCE_REFRESH_MS,
     sourceTimeoutMs: parsed.SOURCE_TIMEOUT_MS,
+    authAccessTtlMs: parsed.AUTH_ACCESS_TTL_MS,
+    authRefreshTtlMs: parsed.AUTH_REFRESH_TTL_MS,
   };
   if (parsed.DATABASE_URL) config.databaseUrl = parsed.DATABASE_URL;
   if (parsed.CMS_ADMIN_TOKEN) config.cmsAdminToken = parsed.CMS_ADMIN_TOKEN;

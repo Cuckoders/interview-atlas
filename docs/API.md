@@ -56,6 +56,31 @@ POST /admin/content/:id/transition
 
 Создание всегда формирует версию 1 со статусом `draft`. `PUT` создаёт следующую версию и требует `expectedVersion`. Переходы статусов также требуют `expectedVersion`, поэтому параллельное редактирование завершается безопасной ошибкой `409`, а не потерей изменений.
 
+## Аккаунт и сессии
+
+```http
+POST   /v1/auth/register
+POST   /v1/auth/login
+POST   /v1/auth/refresh
+POST   /v1/auth/logout
+GET    /v1/account
+GET    /v1/account/export
+DELETE /v1/account
+```
+
+Регистрация и вход возвращают короткоживущий `accessToken` и ротируемый `refreshToken`. Защищённые маршруты принимают `Authorization: Bearer <accessToken>`. Refresh-токен используется только телом `/v1/auth/refresh`; после успешной ротации предыдущая пара токенов перестаёт действовать. Ответы с данными сессии содержат `Cache-Control: no-store`.
+
+Удаление аккаунта требует повторного ввода пароля. PostgreSQL каскадно удаляет все сессии, облачное состояние и историю idempotency keys.
+
+## Облачная синхронизация
+
+```http
+GET  /v1/sync
+POST /v1/sync/actions
+```
+
+`GET` возвращает версию и полный snapshot прогресса. `POST` принимает до 100 операций с уникальным `id`, `occurredAt`, типом и желаемым значением. Повторная отправка того же `id` подтверждается, но не увеличивает версию и не применяет действие повторно.
+
 ## Хранение и миграция
 
 Без `DATABASE_URL` backend запускается с in-memory repository. Для PostgreSQL задайте `DATABASE_URL` в `server/.env` и выполните:
@@ -64,4 +89,4 @@ POST /admin/content/:id/transition
 npm --prefix server run migrate
 ```
 
-Миграции применяются по имени и записываются в `schema_migrations`. `001_vacancies.sql` создаёт вакансии и снимки, `002_content_cms.sql` — материалы, версии, события workflow, partial unique-индекс публикации и индексы очереди ревью.
+Миграции применяются по имени и записываются в `schema_migrations`. `001_vacancies.sql` создаёт вакансии и снимки, `002_content_cms.sql` — материалы и редакционный workflow, `003_accounts_and_sync.sql` — аккаунты, ротируемые сессии, snapshot прогресса и idempotency keys offline-операций.

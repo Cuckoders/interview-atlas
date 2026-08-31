@@ -11,6 +11,10 @@ import { PostgresVacancyRepository } from './repositories/postgres-vacancy-repos
 import type { VacancyRepository } from './repositories/vacancy-repository.js';
 import { VacancyService } from './services/vacancy-service.js';
 import { ContentService } from './services/content-service.js';
+import { MemoryAccountRepository } from './repositories/memory-account-repository.js';
+import { PostgresAccountRepository } from './repositories/postgres-account-repository.js';
+import type { AccountRepository } from './repositories/account-repository.js';
+import { AccountService } from './services/account-service.js';
 
 const config = loadConfig();
 const repository: VacancyRepository = config.databaseUrl
@@ -21,7 +25,11 @@ const contentRepository: ContentRepository = config.databaseUrl
   ? new PostgresContentRepository(config.databaseUrl)
   : new MemoryContentRepository();
 const contentService = new ContentService(contentRepository);
-const app = await buildApp(config, service, contentService);
+const accountRepository: AccountRepository = config.databaseUrl
+  ? new PostgresAccountRepository(config.databaseUrl)
+  : new MemoryAccountRepository();
+const accountService = new AccountService(accountRepository, config.authAccessTtlMs, config.authRefreshTtlMs);
+const app = await buildApp(config, service, contentService, accountService);
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'graceful shutdown');

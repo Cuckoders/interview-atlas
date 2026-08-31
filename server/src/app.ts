@@ -9,10 +9,13 @@ import { z, ZodError } from 'zod';
 import type { AppConfig } from './config.js';
 import { ContentError } from './content-domain.js';
 import { registerContentRoutes } from './content-routes.js';
+import { AccountError } from './account-domain.js';
+import { registerAccountRoutes } from './account-routes.js';
 import { decodeCursor, InvalidCursorError } from './cursor.js';
 import { specialties, workFormats } from './domain.js';
 import type { VacancyService } from './services/vacancy-service.js';
 import type { ContentService } from './services/content-service.js';
+import type { AccountService } from './services/account-service.js';
 
 const querySchema = z.object({
   query: z.string().trim().max(100).optional(),
@@ -24,7 +27,7 @@ const querySchema = z.object({
 const idSchema = z.object({ id: z.string().min(1).max(300).regex(/^[a-zA-Z0-9._-]+$/) });
 
 export async function buildApp(
-  config: AppConfig, vacancyService: VacancyService, contentService: ContentService,
+  config: AppConfig, vacancyService: VacancyService, contentService: ContentService, accountService: AccountService,
 ): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: config.logLevel, redact: ['req.headers.authorization'] },
@@ -44,7 +47,7 @@ export async function buildApp(
       if (!origin || allowedOrigins.has(origin)) callback(null, true);
       else callback(new Error('Origin not allowed'), false);
     },
-    methods: ['GET', 'POST', 'PUT'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
   });
   await app.register(rateLimit, { max: 60, timeWindow: '1 minute' });
   app.get('/admin', async (_request, reply) => reply.redirect('/admin-ui/'));
@@ -80,6 +83,7 @@ export async function buildApp(
     return item;
   });
   await registerContentRoutes(app, config, contentService);
+  await registerAccountRoutes(app, accountService);
 
   app.setNotFoundHandler((_request, reply) => reply.code(404).send({ error: { code: 'not_found', message: 'Маршрут не найден' } }));
   app.setErrorHandler((error, request, reply) => {
@@ -89,13 +93,25 @@ export async function buildApp(
     if (error instanceof ContentError) {
       return reply.code(error.statusCode).send({ error: { code: error.code, message: error.message } });
     }
+    if (error instanceof AccountError) {
+      return reply.code(error.statusCode).send({ error: { code: error.code, message: error.message } });
+    }
     if (error instanceof Error && error.message === 'Origin not allowed') {
       return reply.code(403).send({ error: { code: 'origin_forbidden', message: 'Источник запроса не разрешён' } });
     }
+    const statusCode = httpStatusCode(error);
+    if (statusCode !== null && statusCode >= 400 && statusCode < 500) {
+      return reply.code(statusCode).send({ error: { code: 'invalid_request', message: 'Проверьте параметры запроса' } });
+    }
     request.log.error({ err: error }, 'request failed');
-    return reply.code(502).send({ error: { code: 'upstream_unavailable', message: 'Источник вакансий временно недоступен' } });
+    return reply.code(503).send({ error: { code: 'service_unavailable', message: 'Сервис временно недоступен' } });
   });
 
-  app.addHook('onClose', async () => { await Promise.all([vacancyService.close(), contentService.close()]); });
+  app.addHook('onClose', async () => { await Promise.all([vacancyService.close(), contentService.close(), accountService.close()]); });
   return app;
+}
+
+function httpStatusCode(error: unknown): number | null {
+  if (typeof error !== 'object' || error === null || !('statusCode' in error)) return null;
+  return typeof error.statusCode === 'number' ? error.statusCode : null;
 }

@@ -62,6 +62,16 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Аккаунт',
+          tabBarAccessibilityLabel: 'Аккаунт и синхронизация',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person-circle' : 'person-circle-outline'} color={color} size={size} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

@@ -6,12 +6,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { palette } from '@/theme/palette';
+import { useSessionLifecycle } from '@/hooks/use-session-lifecycle';
 
 export { ErrorBoundary } from 'expo-router';
 
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  useSessionLifecycle();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = palette[scheme];
 

@@ -8,12 +8,15 @@ import { MemoryContentRepository } from '../src/repositories/memory-content-repo
 import { MemoryVacancyRepository } from '../src/repositories/memory-vacancy-repository.js';
 import { ContentService } from '../src/services/content-service.js';
 import { VacancyService } from '../src/services/vacancy-service.js';
+import { AccountService } from '../src/services/account-service.js';
+import { MemoryAccountRepository } from '../src/repositories/memory-account-repository.js';
 
 const token = 'test-editor-token-with-at-least-32-characters';
 const config: AppConfig = {
   host: '127.0.0.1', port: 4000, logLevel: 'silent', trustProxy: false,
   allowedOrigins: ['http://localhost:8081'], sourceRefreshMs: 900_000, sourceTimeoutMs: 5_000,
   cmsAdminToken: token,
+  authAccessTtlMs: 900_000, authRefreshTtlMs: 2_592_000_000,
 };
 const vacancyAdapter: VacancySourceAdapter = { source: 'test', async fetchLatest() { return []; } };
 const content = {
@@ -28,6 +31,7 @@ test('CMS keeps the published version visible while a new draft is edited', asyn
     config,
     new VacancyService(new MemoryVacancyRepository(), vacancyAdapter, 900_000),
     new ContentService(new MemoryContentRepository()),
+    new AccountService(new MemoryAccountRepository()),
   );
   const unauthorized = await app.inject({ method: 'GET', url: '/admin/content' });
   assert.equal(unauthorized.statusCode, 401);
@@ -69,6 +73,7 @@ test('CMS validates workflow and HTTPS sources', async () => {
     config,
     new VacancyService(new MemoryVacancyRepository(), vacancyAdapter, 900_000),
     new ContentService(new MemoryContentRepository()),
+    new AccountService(new MemoryAccountRepository()),
   );
   const invalid = await app.inject({
     method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` },
