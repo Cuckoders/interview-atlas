@@ -1,5 +1,6 @@
 import type {
   InterviewQuestion,
+  LearningTrack,
   PracticeTask,
   Specialty,
   Vacancy,
@@ -23,9 +24,10 @@ export type VacancyQuery = {
 };
 
 export interface LearningRepository {
-  questions(specialty: Specialty, cursor?: string): Promise<CursorPage<InterviewQuestion>>;
-  tasks(specialty: Specialty, cursor?: string): Promise<CursorPage<PracticeTask>>;
-  videos(specialty: Specialty, cursor?: string): Promise<CursorPage<VideoLesson>>;
+  questions(specialty: Specialty, cursor?: string, signal?: AbortSignal): Promise<CursorPage<InterviewQuestion>>;
+  tasks(specialty: Specialty, cursor?: string, signal?: AbortSignal): Promise<CursorPage<PracticeTask>>;
+  videos(specialty: Specialty, cursor?: string, signal?: AbortSignal): Promise<CursorPage<VideoLesson>>;
+  tracks(specialty: Specialty, cursor?: string, signal?: AbortSignal): Promise<CursorPage<LearningTrack>>;
 }
 
 export interface VacancyRepository {

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DetailLayout, MissingDetail } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
@@ -10,6 +10,7 @@ import { Chip } from '@/components/ui/chip';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { practiceTasks } from '@/data/mock-data';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { useLearningDetail } from '@/hooks/use-learning-detail';
 import { useAppStore } from '@/store/use-app-store';
 import { radii } from '@/theme/palette';
 
@@ -21,7 +22,7 @@ export default function TaskDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useAppTheme();
   const [showSolution, setShowSolution] = useState(false);
-  const task = practiceTasks.find((item) => item.id === id);
+  const { item: task, loading } = useLearningDetail('task', id);
   const completedTaskIds = useAppStore((state) => state.completedTaskIds);
   const toggleTaskCompleted = useAppStore((state) => state.toggleTaskCompleted);
   const toggleCompleted = useCallback(() => {
@@ -31,6 +32,7 @@ export default function TaskDetailScreen() {
   }, [task, toggleTaskCompleted]);
   const toggleSolution = useCallback(() => setShowSolution((value) => !value), []);
 
+  if (loading) return <DetailLayout><ActivityIndicator color={colors.accent} /></DetailLayout>;
   if (!task) return <MissingDetail title="Задача не найдена" />;
   const completed = completedTaskIds.includes(task.id);
 

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { DetailLayout, MissingDetail } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
@@ -10,6 +10,7 @@ import { Chip } from '@/components/ui/chip';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { questions } from '@/data/mock-data';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { useLearningDetail } from '@/hooks/use-learning-detail';
 import { useAppStore } from '@/store/use-app-store';
 import { radii } from '@/theme/palette';
 import { formatTimestamp } from '@/utils/date';
@@ -21,7 +22,7 @@ export function generateStaticParams() {
 export default function QuestionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useAppTheme();
-  const question = questions.find((item) => item.id === id);
+  const { item: question, loading } = useLearningDetail('question', id);
   const savedQuestionIds = useAppStore((state) => state.savedQuestionIds);
   const toggleQuestionSaved = useAppStore((state) => state.toggleQuestionSaved);
   const toggleSaved = useCallback(() => {
@@ -30,6 +31,7 @@ export default function QuestionDetailScreen() {
     void Haptics.selectionAsync();
   }, [question, toggleQuestionSaved]);
 
+  if (loading) return <DetailLayout><ActivityIndicator color={colors.accent} /></DetailLayout>;
   if (!question) return <MissingDetail title="Вопрос не найден" />;
   const saved = savedQuestionIds.includes(question.id);
 

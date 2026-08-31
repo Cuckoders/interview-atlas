@@ -5,11 +5,13 @@ import type { VacancySourceAdapter } from '../src/adapters/arbeitnow-adapter.js'
 import { buildApp } from '../src/app.js';
 import type { AppConfig } from '../src/config.js';
 import { MemoryVacancyRepository } from '../src/repositories/memory-vacancy-repository.js';
+import { MemoryContentRepository } from '../src/repositories/memory-content-repository.js';
+import { ContentService } from '../src/services/content-service.js';
 import { VacancyService } from '../src/services/vacancy-service.js';
 
 const config: AppConfig = {
   host: '127.0.0.1', port: 4000, logLevel: 'silent', trustProxy: false, allowedOrigins: ['http://localhost:8081'],
-  sourceRefreshMs: 900_000, sourceTimeoutMs: 5_000,
+  sourceRefreshMs: 900_000, sourceTimeoutMs: 5_000, cmsAdminToken: 'test-editor-token-with-at-least-32-characters',
 };
 const adapter: VacancySourceAdapter = {
   source: 'Arbeitnow',
@@ -25,7 +27,7 @@ const adapter: VacancySourceAdapter = {
 
 test('vacancy endpoint imports, filters and does not duplicate', async () => {
   const repository = new MemoryVacancyRepository();
-  const app = await buildApp(config, new VacancyService(repository, adapter, 900_000));
+  const app = await buildApp(config, new VacancyService(repository, adapter, 900_000), new ContentService(new MemoryContentRepository()));
   const first = await app.inject({ method: 'GET', url: '/v1/vacancies?specialty=Frontend&limit=10' });
   assert.equal(first.statusCode, 200);
   assert.equal(first.json().items.length, 1);
@@ -36,7 +38,7 @@ test('vacancy endpoint imports, filters and does not duplicate', async () => {
 });
 
 test('vacancy endpoint rejects unknown filters and invalid ids', async () => {
-  const app = await buildApp(config, new VacancyService(new MemoryVacancyRepository(), adapter, 900_000));
+  const app = await buildApp(config, new VacancyService(new MemoryVacancyRepository(), adapter, 900_000), new ContentService(new MemoryContentRepository()));
   assert.equal((await app.inject({ method: 'GET', url: '/v1/vacancies?specialty=Design' })).statusCode, 400);
   assert.equal((await app.inject({ method: 'GET', url: '/v1/vacancies/not%20safe' })).statusCode, 400);
   await app.close();

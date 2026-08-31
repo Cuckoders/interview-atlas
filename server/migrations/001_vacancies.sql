@@ -1,5 +1,3 @@
-BEGIN;
-
 CREATE TABLE IF NOT EXISTS vacancy_sources (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name text NOT NULL UNIQUE,
@@ -49,5 +47,3 @@ CREATE INDEX IF NOT EXISTS vacancies_work_format_feed_idx
   WHERE archived_at IS NULL;
 CREATE INDEX IF NOT EXISTS vacancy_snapshots_history_idx
   ON vacancy_snapshots (vacancy_id, fetched_at DESC);
-
-COMMIT;
