@@ -10,6 +10,7 @@ export type CursorPage<T> = {
   items: T[];
   nextCursor: string | null;
   syncedAt: string;
+  stale?: boolean;
 };
 
 export type VacancyQuery = {
@@ -18,6 +19,7 @@ export type VacancyQuery = {
   workFormat?: Vacancy['workFormat'];
   cursor?: string;
   limit?: number;
+  signal?: AbortSignal;
 };
 
 export interface LearningRepository {
@@ -28,7 +30,7 @@ export interface LearningRepository {
 
 export interface VacancyRepository {
   search(query: VacancyQuery): Promise<CursorPage<Vacancy>>;
-  byId(id: string): Promise<Vacancy | null>;
+  byId(id: string, signal?: AbortSignal): Promise<Vacancy | null>;
 }
 
 export type VacancySourceRecord = {

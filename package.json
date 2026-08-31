@@ -37,7 +37,10 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "export:web": "expo export --platform web"
+    "export:web": "expo export --platform web",
+    "server:dev": "npm --prefix server run dev",
+    "server:typecheck": "npm --prefix server run typecheck",
+    "server:test": "npm --prefix server test"
   },
   "private": true
 }

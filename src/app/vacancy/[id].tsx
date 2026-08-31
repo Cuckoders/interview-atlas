@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
-import { Linking, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 
 import { DetailLayout, MissingDetail } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
@@ -9,6 +9,7 @@ import { Chip } from '@/components/ui/chip';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { vacancies } from '@/data/mock-data';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { useVacancyDetail } from '@/hooks/use-vacancy-detail';
 import { useAppStore } from '@/store/use-app-store';
 import { radii } from '@/theme/palette';
 import { formatTimestamp } from '@/utils/date';
@@ -20,10 +21,11 @@ export function generateStaticParams() {
 export default function VacancyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useAppTheme();
-  const vacancy = vacancies.find((item) => item.id === id);
+  const { vacancy, loading } = useVacancyDetail(id);
   const savedVacancyIds = useAppStore((state) => state.savedVacancyIds);
   const toggleVacancySaved = useAppStore((state) => state.toggleVacancySaved);
 
+  if (loading) return <DetailLayout><ActivityIndicator color={colors.accent} /></DetailLayout>;
   if (!vacancy) return <MissingDetail title="Вакансия не найдена" />;
   const saved = savedVacancyIds.includes(vacancy.id);
   const toggleSaved = () => {

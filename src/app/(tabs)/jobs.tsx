@@ -1,15 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, TextInput, View } from 'react-native';
 
 import { VacancyCard } from '@/components/cards/vacancy-card';
 import { Screen } from '@/components/screen';
 import { ScreenHeader } from '@/components/screen-header';
 import { SpecialtyPicker } from '@/components/specialty-picker';
 import { AppText } from '@/components/ui/app-text';
-import { vacancies } from '@/data/mock-data';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { useVacancyFeed } from '@/hooks/use-vacancy-feed';
 import { useAppStore } from '@/store/use-app-store';
 import { radii } from '@/theme/palette';
 import type { Specialty, Vacancy } from '@/types/domain';
@@ -21,16 +21,16 @@ export default function JobsScreen() {
   const [savedOnly, setSavedOnly] = useState(false);
   const savedVacancyIds = useAppStore((state) => state.savedVacancyIds);
   const toggleVacancySaved = useAppStore((state) => state.toggleVacancySaved);
+  const feedQuery = useMemo(() => ({
+    query,
+    ...(specialty === 'Все' ? {} : { specialty }),
+    limit: 20,
+  }), [query, specialty]);
+  const feed = useVacancyFeed(feedQuery);
 
   const data = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase('ru');
-    return vacancies.filter((item) => {
-      const matchesSpecialty = specialty === 'Все' || item.specialty === specialty;
-      const matchesSaved = !savedOnly || savedVacancyIds.includes(item.id);
-      const haystack = `${item.title} ${item.company} ${item.skills.join(' ')}`.toLocaleLowerCase('ru');
-      return matchesSpecialty && matchesSaved && (!normalized || haystack.includes(normalized));
-    });
-  }, [query, savedOnly, savedVacancyIds, specialty]);
+    return feed.items.filter((item) => !savedOnly || savedVacancyIds.includes(item.id));
+  }, [feed.items, savedOnly, savedVacancyIds]);
 
   const selectSpecialty = useCallback((value: Specialty | 'Все') => {
     setSpecialty(value);
@@ -117,12 +117,24 @@ export default function JobsScreen() {
           Найдено: {data.length}
         </AppText>
       </View>
-      <View style={[styles.notice, { backgroundColor: colors.warmSoft }]}>
-        <Ionicons name="shield-checkmark-outline" size={19} color={colors.warning} />
-        <AppText variant="caption" style={{ flex: 1, color: colors.warning }}>
-          Сейчас показаны демо-данные. Боевой сбор работает только через разрешённые API и
-          сохраняет ссылку на источник.
-        </AppText>
+      <View style={[styles.notice, { backgroundColor: feed.error || feed.stale ? colors.warmSoft : colors.accentSoft }]}>
+        <Ionicons
+          name={feed.error ? 'cloud-offline-outline' : feed.stale ? 'time-outline' : 'shield-checkmark-outline'}
+          size={19}
+          color={feed.error || feed.stale ? colors.warning : colors.success}
+        />
+        <View style={styles.noticeText}>
+          <AppText variant="caption" style={{ color: feed.error || feed.stale ? colors.warning : colors.success }}>
+            {feed.error ?? (feed.stale
+              ? 'Показан локальный кеш; обновляем данные при доступности backend.'
+              : `Живая лента Arbeitnow${feed.syncedAt ? ` · синхронизировано ${formatSyncTime(feed.syncedAt)}` : ''}.`)}
+          </AppText>
+          {feed.error ? (
+            <Pressable accessibilityRole="button" onPress={feed.refresh} hitSlop={8}>
+              <AppText variant="label" color="accent">Повторить</AppText>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </>
   );
@@ -135,7 +147,13 @@ export default function JobsScreen() {
         keyExtractor={keyExtractor}
         ListHeaderComponent={header}
         ItemSeparatorComponent={Separator}
-        ListEmptyComponent={EmptyVacancies}
+        ListEmptyComponent={feed.loading
+          ? <ActivityIndicator style={styles.footerLoader} color={colors.accent} />
+          : <EmptyVacancies />}
+        ListFooterComponent={feed.loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.accent} /> : null}
+        refreshControl={<RefreshControl refreshing={feed.refreshing} onRefresh={feed.refresh} tintColor={colors.accent} colors={[colors.accent]} />}
+        onEndReached={feed.hasMore ? feed.loadMore : undefined}
+        onEndReachedThreshold={0.4}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -145,6 +163,10 @@ export default function JobsScreen() {
       />
     </Screen>
   );
+}
+
+function formatSyncTime(value: string) {
+  return new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 }
 
 function Separator() {
@@ -202,6 +224,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
   },
+  noticeText: { flex: 1, gap: 8 },
+  footerLoader: { paddingVertical: 24 },
   empty: { paddingHorizontal: 20, paddingVertical: 36, gap: 8 },
   pressed: { opacity: 0.72 },
 });

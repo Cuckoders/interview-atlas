@@ -20,7 +20,7 @@ export class MockVacancyRepository implements VacancyRepository {
     return { items, nextCursor: null, syncedAt: new Date().toISOString() };
   }
 
-  async byId(id: string): Promise<Vacancy | null> {
+  async byId(id: string, _signal?: AbortSignal): Promise<Vacancy | null> {
     return vacancies.find((item) => item.id === id) ?? null;
   }
 }
