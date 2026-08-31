@@ -7,9 +7,11 @@ import type { AppConfig } from '../src/config.js';
 import { MemoryAccountRepository } from '../src/repositories/memory-account-repository.js';
 import { MemoryContentRepository } from '../src/repositories/memory-content-repository.js';
 import { MemoryVacancyRepository } from '../src/repositories/memory-vacancy-repository.js';
+import { MemoryPreparationRepository } from '../src/repositories/memory-preparation-repository.js';
 import { AccountService } from '../src/services/account-service.js';
 import { ContentService } from '../src/services/content-service.js';
 import { VacancyService } from '../src/services/vacancy-service.js';
+import { PreparationService } from '../src/services/preparation-service.js';
 
 const config: AppConfig = {
   host: '127.0.0.1', port: 4000, logLevel: 'silent', trustProxy: false,
@@ -94,6 +96,7 @@ async function testApp() {
     new VacancyService(new MemoryVacancyRepository(), adapter, 900_000),
     new ContentService(new MemoryContentRepository()),
     new AccountService(new MemoryAccountRepository()),
+    new PreparationService(new MemoryPreparationRepository()),
   );
 }
 

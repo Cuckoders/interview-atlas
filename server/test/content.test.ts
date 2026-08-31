@@ -6,8 +6,10 @@ import { buildApp } from '../src/app.js';
 import type { AppConfig } from '../src/config.js';
 import { MemoryContentRepository } from '../src/repositories/memory-content-repository.js';
 import { MemoryVacancyRepository } from '../src/repositories/memory-vacancy-repository.js';
+import { MemoryPreparationRepository } from '../src/repositories/memory-preparation-repository.js';
 import { ContentService } from '../src/services/content-service.js';
 import { VacancyService } from '../src/services/vacancy-service.js';
+import { PreparationService } from '../src/services/preparation-service.js';
 import { AccountService } from '../src/services/account-service.js';
 import { MemoryAccountRepository } from '../src/repositories/memory-account-repository.js';
 
@@ -32,6 +34,7 @@ test('CMS keeps the published version visible while a new draft is edited', asyn
     new VacancyService(new MemoryVacancyRepository(), vacancyAdapter, 900_000),
     new ContentService(new MemoryContentRepository()),
     new AccountService(new MemoryAccountRepository()),
+    new PreparationService(new MemoryPreparationRepository()),
   );
   const unauthorized = await app.inject({ method: 'GET', url: '/admin/content' });
   assert.equal(unauthorized.statusCode, 401);
@@ -74,6 +77,7 @@ test('CMS validates workflow and HTTPS sources', async () => {
     new VacancyService(new MemoryVacancyRepository(), vacancyAdapter, 900_000),
     new ContentService(new MemoryContentRepository()),
     new AccountService(new MemoryAccountRepository()),
+    new PreparationService(new MemoryPreparationRepository()),
   );
   const invalid = await app.inject({
     method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` },

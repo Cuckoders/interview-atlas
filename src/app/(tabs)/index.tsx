@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
@@ -15,6 +15,7 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { questions, vacancies } from '@/data/mock-data';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useAppStore } from '@/store/use-app-store';
+import { usePreparationStore } from '@/store/use-preparation-store';
 import { radii } from '@/theme/palette';
 import type { InterviewQuestion, Specialty, Vacancy } from '@/types/domain';
 
@@ -32,6 +33,10 @@ export default function TodayScreen() {
   const setSpecialty = useAppStore((state) => state.setSpecialty);
   const toggleQuestionSaved = useAppStore((state) => state.toggleQuestionSaved);
   const toggleVacancySaved = useAppStore((state) => state.toggleVacancySaved);
+  const preparation = usePreparationStore((state) => state.snapshot);
+  const planSessions = preparation?.plan?.sessions ?? [];
+  const finishedSessions = planSessions.filter((session) => session.status === 'completed').length;
+  const nextSession = planSessions.find((session) => session.status === 'pending');
 
   const data = useMemo<TodayItem[]>(() => {
     const question = questions.find((item) => item.specialty === specialty) ?? questions[0];
@@ -52,8 +57,8 @@ export default function TodayScreen() {
     [setSpecialty],
   );
 
-  const openPractice = useCallback(() => router.push('/practice'), [router]);
-  const openLearn = useCallback(() => router.push('/learn'), [router]);
+  const openPractice = useCallback(() => router.push((preparation?.profile ? '/preparation' : '/preparation/onboarding') as Href), [preparation?.profile, router]);
+  const openPlan = useCallback(() => router.push('/preparation' as Href), [router]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: TodayItem; index: number }) => (
@@ -100,13 +105,13 @@ export default function TodayScreen() {
               <AppText variant="caption" color="accent">
                 СЕРИЯ ПОДГОТОВКИ
               </AppText>
-              <AppText variant="title">3 дня подряд</AppText>
+              <AppText variant="title">{nextSession ? nextSession.skillLabel : 'Начните с цели'}</AppText>
             </View>
           </View>
           <AppText color="secondary">
-            Сегодня достаточно решить одну задачу, чтобы сохранить темп.
+            {nextSession ? `${nextSession.durationMinutes} минут — и план пересчитается по вашему результату.` : 'Укажите дедлайн и доступное время — соберём выполнимую неделю.'}
           </AppText>
-          <PrimaryButton label="Начать практику" icon="play" onPress={openPractice} />
+          <PrimaryButton label={nextSession ? 'Открыть сессию' : 'Настроить план'} icon="play" onPress={openPractice} />
         </View>
 
         <View style={styles.stats}>
@@ -119,7 +124,7 @@ export default function TodayScreen() {
           accessibilityRole="button"
           accessibilityLabel="Открыть все учебные треки"
           android_ripple={{ color: colors.overlay }}
-          onPress={openLearn}
+          onPress={openPlan}
           style={({ pressed }) => [
             styles.planRow,
             { backgroundColor: colors.surface, borderColor: colors.border },
@@ -128,7 +133,7 @@ export default function TodayScreen() {
           <View style={styles.planText}>
             <AppText variant="label">План на неделю</AppText>
             <AppText variant="caption" color="secondary">
-              2 из 7 учебных сессий завершено
+              {preparation?.profile ? `${finishedSessions} из ${planSessions.length} учебных сессий завершено` : 'Персональный график ещё не настроен'}
             </AppText>
           </View>
           <Ionicons name="chevron-forward" size={22} color={colors.accent} />

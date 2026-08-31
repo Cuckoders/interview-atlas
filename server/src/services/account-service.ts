@@ -86,8 +86,8 @@ export class AccountService {
     return this.repository.applyActions(userId, actions);
   }
 
-  async exportData(user: Account) {
-    return { exportedAt: new Date().toISOString(), account: user, progress: await this.repository.getProgress(user.id) };
+  async exportData(user: Account, additions: Record<string, unknown> = {}) {
+    return { exportedAt: new Date().toISOString(), account: user, progress: await this.repository.getProgress(user.id), ...additions };
   }
 
   async deleteAccount(userId: string, password: string): Promise<void> {

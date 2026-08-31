@@ -81,6 +81,23 @@ POST /v1/sync/actions
 
 `GET` возвращает версию и полный snapshot прогресса. `POST` принимает до 100 операций с уникальным `id`, `occurredAt`, типом и желаемым значением. Повторная отправка того же `id` подтверждается, но не увеличивает версию и не применяет действие повторно.
 
+## Персональная подготовка
+
+Все пользовательские маршруты требуют `Authorization: Bearer <accessToken>` и возвращают `Cache-Control: no-store`:
+
+```http
+GET  /v1/preparation
+PUT  /v1/preparation/profile
+POST /v1/preparation/diagnostic
+POST /v1/preparation/sessions/:id/complete
+POST /v1/preparation/plan/regenerate
+GET  /v1/preparation/skills/:specialty
+```
+
+`GET /v1/preparation` возвращает единый snapshot `profile + skills + plan`. Профиль задаёт направление, уровень, целевую дату, компании, от 1 до 7 сессий в неделю, длительность 15–120 минут, часовой пояс, время напоминаний и quiet hours.
+
+Диагностика принимает оценку 1–5 для каждого из пяти навыков выбранного направления. Завершение сессии принимает уникальный `actionId`, `occurredAt` и качество `hard`, `good` или `easy`. Ключ идемпотентности не позволяет повторной доставке дважды изменить навык. После нового результата оставшиеся сессии пересобираются с приоритетом тем, у которых ниже score или наступила дата повторения.
+
 ## Хранение и миграция
 
 Без `DATABASE_URL` backend запускается с in-memory repository. Для PostgreSQL задайте `DATABASE_URL` в `server/.env` и выполните:
@@ -89,4 +106,4 @@ POST /v1/sync/actions
 npm --prefix server run migrate
 ```
 
-Миграции применяются по имени и записываются в `schema_migrations`. `001_vacancies.sql` создаёт вакансии и снимки, `002_content_cms.sql` — материалы и редакционный workflow, `003_accounts_and_sync.sql` — аккаунты, ротируемые сессии, snapshot прогресса и idempotency keys offline-операций.
+Миграции применяются по имени и записываются в `schema_migrations`. `001_vacancies.sql` создаёт вакансии и снимки, `002_content_cms.sql` — материалы и редакционный workflow, `003_accounts_and_sync.sql` — аккаунты и облачный прогресс, `004_personal_preparation.sql` — профиль подготовки, карту навыков, текущий план и idempotency keys завершённых сессий.

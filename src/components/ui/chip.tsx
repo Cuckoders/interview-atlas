@@ -45,7 +45,7 @@ export function Chip({ label, selected = false, onPress }: ChipProps) {
 
 const styles = StyleSheet.create({
   inner: {
-    minHeight: 40,
+    minHeight: 48,
     paddingHorizontal: 14,
     borderWidth: 1,
     borderRadius: radii.pill,

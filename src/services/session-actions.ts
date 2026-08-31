@@ -13,6 +13,10 @@ import { getMemoryAccountId } from '@/services/session-memory';
 import { clearOutbox } from '@/services/sync-outbox';
 import { useAppStore } from '@/store/use-app-store';
 import { useSessionStore } from '@/store/use-session-store';
+import { initializePreparation } from '@/services/preparation-sync';
+import { clearPreparationOutbox } from '@/services/preparation-outbox';
+import { usePreparationStore } from '@/store/use-preparation-store';
+import { cancelPreparationReminders } from '@/services/reminder-service';
 
 const deviceName = `Interview Atlas ${Platform.OS}`;
 
@@ -26,6 +30,7 @@ export async function bootstrapSession(): Promise<void> {
   }
   useSessionStore.getState().setSignedIn(user);
   await initializeCloudProgress();
+  await initializePreparation();
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
@@ -35,6 +40,7 @@ export async function signIn(email: string, password: string): Promise<void> {
     const user = await loginRemoteAccount({ email, password, deviceName });
     useSessionStore.getState().setSignedIn(user);
     await initializeCloudProgress();
+    await initializePreparation();
   } catch (error) {
     useSessionStore.getState().setSignedOut();
     throw error;
@@ -48,6 +54,7 @@ export async function signUp(displayName: string, email: string, password: strin
     const user = await registerRemoteAccount({ displayName, email, password, deviceName });
     useSessionStore.getState().setSignedIn(user);
     await initializeCloudProgress();
+    await initializePreparation();
   } catch (error) {
     useSessionStore.getState().setSignedOut();
     throw error;
@@ -60,6 +67,8 @@ export async function signOut(): Promise<void> {
   forgetCloudProgress(userId);
   await logoutRemoteAccount();
   useAppStore.getState().resetProgress();
+  await cancelPreparationReminders().catch(() => undefined);
+  usePreparationStore.getState().reset();
   useSessionStore.getState().setSignedOut();
 }
 
@@ -68,7 +77,10 @@ export async function removeAccount(password: string): Promise<void> {
   await deleteRemoteAccount(password);
   forgetCloudProgress(userId);
   if (userId) await clearOutbox(userId);
+  if (userId) await clearPreparationOutbox(userId);
   useAppStore.getState().resetProgress();
+  await cancelPreparationReminders().catch(() => undefined);
+  usePreparationStore.getState().reset();
   useSessionStore.getState().setSignedOut();
 }
 

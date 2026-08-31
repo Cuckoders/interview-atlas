@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { palette } from '@/theme/palette';
 import { useSessionLifecycle } from '@/hooks/use-session-lifecycle';
+import { usePreparationLifecycle } from '@/hooks/use-preparation-lifecycle';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -14,6 +15,7 @@ void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useSessionLifecycle();
+  usePreparationLifecycle();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const colors = palette[scheme];
 
@@ -50,6 +52,8 @@ export default function RootLayout() {
             <Stack.Screen name="question/[id]" options={{ title: 'Вопрос' }} />
             <Stack.Screen name="task/[id]" options={{ title: 'Задача' }} />
             <Stack.Screen name="vacancy/[id]" options={{ title: 'Вакансия' }} />
+            <Stack.Screen name="preparation/index" options={{ title: 'План подготовки' }} />
+            <Stack.Screen name="preparation/onboarding" options={{ title: 'Настройка плана', presentation: 'modal' }} />
           </Stack>
         </ThemeProvider>
       </SafeAreaProvider>

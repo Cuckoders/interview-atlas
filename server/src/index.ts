@@ -15,6 +15,10 @@ import { MemoryAccountRepository } from './repositories/memory-account-repositor
 import { PostgresAccountRepository } from './repositories/postgres-account-repository.js';
 import type { AccountRepository } from './repositories/account-repository.js';
 import { AccountService } from './services/account-service.js';
+import { MemoryPreparationRepository } from './repositories/memory-preparation-repository.js';
+import { PostgresPreparationRepository } from './repositories/postgres-preparation-repository.js';
+import type { PreparationRepository } from './repositories/preparation-repository.js';
+import { PreparationService } from './services/preparation-service.js';
 
 const config = loadConfig();
 const repository: VacancyRepository = config.databaseUrl
@@ -29,7 +33,11 @@ const accountRepository: AccountRepository = config.databaseUrl
   ? new PostgresAccountRepository(config.databaseUrl)
   : new MemoryAccountRepository();
 const accountService = new AccountService(accountRepository, config.authAccessTtlMs, config.authRefreshTtlMs);
-const app = await buildApp(config, service, contentService, accountService);
+const preparationRepository: PreparationRepository = config.databaseUrl
+  ? new PostgresPreparationRepository(config.databaseUrl)
+  : new MemoryPreparationRepository();
+const preparationService = new PreparationService(preparationRepository);
+const app = await buildApp(config, service, contentService, accountService, preparationService);
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'graceful shutdown');

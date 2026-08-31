@@ -22,11 +22,13 @@ import { exportAccountData, removeAccount, signIn, signOut, signUp } from '@/ser
 import { useSessionStore } from '@/store/use-session-store';
 import { radii } from '@/theme/palette';
 import { formatTimestamp } from '@/utils/date';
+import { type Href, useRouter } from 'expo-router';
 
 type Mode = 'login' | 'register';
 
 export default function AccountScreen() {
   const { colors } = useAppTheme();
+  const router = useRouter();
   const status = useSessionStore((state) => state.status);
   const user = useSessionStore((state) => state.user);
   const syncStatus = useSessionStore((state) => state.syncStatus);
@@ -108,7 +110,8 @@ export default function AccountScreen() {
                 </View>
               </View>
 
-              <PrimaryButton label="Синхронизировать сейчас" icon="cloud-upload-outline" onPress={() => void run(synchronizeProgress)} />
+              <PrimaryButton label="Открыть план подготовки" icon="calendar-outline" onPress={() => router.push('/preparation' as Href)} />
+              <PrimaryButton label="Синхронизировать сейчас" icon="cloud-upload-outline" secondary onPress={() => void run(synchronizeProgress)} />
               <PrimaryButton label="Экспортировать мои данные" icon="download-outline" secondary onPress={() => void exportData()} />
               <PrimaryButton label="Выйти" icon="log-out-outline" secondary onPress={() => void run(async () => {
                 await signOut();

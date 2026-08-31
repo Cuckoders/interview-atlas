@@ -66,7 +66,7 @@ export function pushProgressActions(actions: ProgressAction[]): Promise<{
   return authorizedRequest('/v1/sync/actions', { method: 'POST', body: JSON.stringify({ actions }) });
 }
 
-async function authorizedRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function authorizedRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   let token = getMemoryAccessToken();
   if (!token) token = (await refreshSession()).accessToken;
   let response = await fetch(`${API_URL}${path}`, withHeaders(init, token));
