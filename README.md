@@ -1,56 +1,59 @@
-# Welcome to your Expo app 👋
+# Interview Atlas
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Мобильная платформа подготовки к техническим интервью для iOS и Android. Она объединяет учебные треки, актуализируемые вопросы, видеоразборы, практические задачи и вакансии из разрешённых источников.
 
-## Get started
+## Что уже работает
 
-1. Install dependencies
+- персональный экран «Сегодня» с направлением подготовки и серией занятий;
+- учебные треки для Frontend, Backend, Mobile и QA;
+- банк вопросов с коротким и развёрнутым ответом, тегами, датой обновления и источником;
+- практические задачи с заготовкой кода, скрытым разбором и отметкой выполнения;
+- лента вакансий с поиском, фильтрами, источником и временем публикации;
+- сохранение вопросов и вакансий, локальный прогресс через Zustand + AsyncStorage;
+- корректное отображение при отсутствии сети и автоматическая светлая/тёмная тема;
+- deep-link-ready маршруты `/question/:id`, `/task/:id` и `/vacancy/:id`.
 
-   ```bash
-   npm install
-   ```
+Вакансии в MVP демонстрационные. Боевой сбор выполняется только на backend через официальные API, разрешённые feeds или партнёрские интеграции. Мобильное приложение не содержит ключей и не скрейпит сайты напрямую.
 
-2. Start the app
+## Стек
 
-   ```bash
-   npx expo start
-   ```
+- Expo SDK 57 + React Native + TypeScript;
+- Expo Router;
+- Zustand с AsyncStorage для несекретного локального прогресса;
+- NetInfo для состояния сети;
+- нативные back-жесты, Android ripple и haptics.
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Запуск
 
 ```bash
-npm run reset-project
+npm install
+npm run ios
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Для Android используйте `npm run android`, для web-preview — `npm run web`.
 
-### Other setup steps
+## Проверки
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm run typecheck
+npm run lint
+npm run export:web
+```
 
-## Learn more
+CI намеренно не добавлен: на текущем этапе приоритет у функционала.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Архитектура данных
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Контракты клиента находятся в `src/services/contracts.ts`. Подробная схема безопасного и юридически корректного сбора вакансий описана в [docs/VACANCY_INGESTION.md](docs/VACANCY_INGESTION.md), продуктовый план — в [docs/PRODUCT.md](docs/PRODUCT.md).
 
-## Join the community
+## Ближайшие этапы
 
-Join our community of developers creating universal apps.
+1. backend-агрегатор вакансий с адаптером первого официального API, дедупликацией и cursor pagination;
+2. редакторская CMS для вопросов, задач и видео;
+3. авторизация, облачная синхронизация прогресса и сохранённых материалов;
+4. персональный план подготовки и уведомления;
+5. рекомендации вакансий по навыкам и пробелам в подготовке.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Лицензия
+
+MIT
