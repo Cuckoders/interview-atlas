@@ -35,14 +35,16 @@ Question:
 Task:
 
 ```json
-{"description":"...","difficulty":"Средний","estimatedMinutes":30,"skills":["TypeScript"],"starterCode":"","solution":"..."}
+{"description":"...","difficulty":"Средний","estimatedMinutes":30,"skills":["JavaScript"],"starterCode":"function sum(a, b) {\n  return 0;\n}","solution":"...","runner":{"language":"javascript","entrypoint":"sum","tests":[{"name":"positive","args":[2,3],"expected":5}]}}
 ```
 
 Video:
 
 ```json
-{"author":"...","durationMinutes":15,"url":"https://..."}
+{"author":"...","durationMinutes":15,"url":"https://cdn.example.com/lesson.mp4","quiz":[{"id":"q1","prompt":"...","options":["...","..."],"correctIndex":0,"explanation":"..."}]}
 ```
+
+CMS проверяет, что видео использует прямой HTTPS URL к кроссплатформенному MP4, в вопросе 2–6 вариантов, а `correctIndex` указывает на существующий вариант. Обычная страница YouTube/Vimeo не является прямой медиассылкой и отклоняется. Runner этапа 6 поддерживает только синхронный JavaScript: `entrypoint` должен быть именем функции, каждый скрытый тест содержит массив JSON-аргументов и JSON-ожидание. Ключи квиза, объяснения и тесты runner никогда не выдаются публичным content API.
 
 Track:
 

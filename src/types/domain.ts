@@ -25,15 +25,18 @@ export type InterviewQuestion = {
 
 export type VideoLesson = {
   id: string;
+  contentVersion: number;
   title: string;
   author: string;
   durationMinutes: number;
   specialty: Specialty;
   url: string;
+  quiz?: { id: string; prompt: string; options: string[] }[];
 };
 
 export type PracticeTask = {
   id: string;
+  contentVersion: number;
   title: string;
   description: string;
   specialty: Specialty;
@@ -42,6 +45,7 @@ export type PracticeTask = {
   skills: string[];
   starterCode?: string;
   solution: string;
+  runner?: { language: 'javascript'; entrypoint: string };
 };
 
 export type Vacancy = {

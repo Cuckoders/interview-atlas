@@ -5,6 +5,7 @@ import { specialties } from './domain.js';
 import type { AccountService } from './services/account-service.js';
 import type { PreparationService } from './services/preparation-service.js';
 import type { VacancyIntelligenceService } from './services/vacancy-intelligence-service.js';
+import type { LearningLabService } from './services/learning-lab-service.js';
 
 const email = z.string().trim().email().max(254).transform((value) => value.toLowerCase());
 const password = z.string().min(10).max(128);
@@ -29,6 +30,7 @@ export async function registerAccountRoutes(
   service: AccountService,
   preparation: PreparationService,
   intelligence: VacancyIntelligenceService,
+  learning: LearningLabService,
 ): Promise<void> {
   app.post('/v1/auth/register', { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } }, async (request, reply) => {
     noStore(reply);
@@ -65,6 +67,7 @@ export async function registerAccountRoutes(
     return service.exportData(user, {
       preparation: await preparation.snapshot(user.id),
       vacancyIntelligence: await intelligence.exportData(user.id),
+      advancedLearning: await learning.exportData(user.id),
     });
   });
 

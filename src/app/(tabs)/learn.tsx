@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useCallback } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 
 import { QuestionCard } from '@/components/cards/question-card';
 import { TrackCard } from '@/components/cards/track-card';
@@ -145,8 +146,12 @@ function VideoCarousel({ items }: { items: VideoLesson[] }) {
 
 function VideoCard({ video }: { video: VideoLesson }) {
   const { colors } = useAppTheme();
+  const router = useRouter();
   return (
-    <View style={[styles.video, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <Pressable accessibilityRole="link" accessibilityLabel={`Открыть видео: ${video.title}`}
+      onPress={() => router.push({ pathname: '/video/[id]', params: { id: video.id } } as Href)}
+      android_ripple={{ color: colors.overlay }}
+      style={({ pressed }) => [styles.video, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}>
       <View style={[styles.play, { backgroundColor: colors.warmSoft }]}>
         <Ionicons name="play" size={22} color={colors.warm} />
       </View>
@@ -156,7 +161,7 @@ function VideoCard({ video }: { video: VideoLesson }) {
       <AppText variant="caption" color="muted">
         {video.durationMinutes} мин · {video.specialty}
       </AppText>
-    </View>
+    </Pressable>
   );
 }
 
@@ -184,4 +189,5 @@ const styles = StyleSheet.create({
   play: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   empty: { marginHorizontal: 20, paddingVertical: 32, gap: 8 },
   loader: { paddingVertical: 24 },
+  pressed: { opacity: 0.72 },
 });

@@ -87,16 +87,18 @@ function mapItem(item: CmsItem): LearningContent {
   };
   if (item.type === 'task') {
     const starterCode = optionalStringField(item.payload, 'starterCode');
+    const runner = runnerField(item.payload);
     return {
-      id: item.id, title: item.title, specialty: item.specialty,
+      id: item.id, contentVersion: item.version, title: item.title, specialty: item.specialty,
       description: stringField(item.payload, 'description'), difficulty: difficultyField(item.payload),
       estimatedMinutes: numberField(item.payload, 'estimatedMinutes'), skills: stringArrayField(item.payload, 'skills'),
-      ...(starterCode ? { starterCode } : {}), solution: stringField(item.payload, 'solution'),
+      ...(starterCode ? { starterCode } : {}), ...(runner ? { runner } : {}), solution: stringField(item.payload, 'solution'),
     };
   }
   if (item.type === 'video') return {
-    id: item.id, title: item.title, specialty: item.specialty, author: stringField(item.payload, 'author'),
+    id: item.id, contentVersion: item.version, title: item.title, specialty: item.specialty, author: stringField(item.payload, 'author'),
     durationMinutes: numberField(item.payload, 'durationMinutes'), url: httpsField(item.payload, 'url'),
+    ...(quizField(item.payload) ? { quiz: quizField(item.payload) } : {}),
   };
   return {
     id: item.id, title: item.title, specialty: item.specialty,
@@ -120,6 +122,24 @@ function stringArrayField(value: Record<string, unknown>, key: string): string[]
   const field = value[key];
   if (!Array.isArray(field) || !field.every((item) => typeof item === 'string')) throw new Error(`Поле ${key} должно быть массивом`);
   return field;
+}
+function quizField(value: Record<string, unknown>) {
+  if (value.quiz === undefined) return undefined;
+  if (!Array.isArray(value.quiz)) throw new Error('Поле quiz должно быть массивом');
+  return value.quiz.map((item) => {
+    if (!isRecord(item) || typeof item.id !== 'string' || typeof item.prompt !== 'string' ||
+      !Array.isArray(item.options) || !item.options.every((option) => typeof option === 'string')) {
+      throw new Error('Некорректный вопрос теста');
+    }
+    return { id: item.id, prompt: item.prompt, options: item.options };
+  });
+}
+function runnerField(value: Record<string, unknown>) {
+  if (value.runner === undefined) return undefined;
+  if (!isRecord(value.runner) || value.runner.language !== 'javascript' || typeof value.runner.entrypoint !== 'string') {
+    throw new Error('Некорректная конфигурация runner');
+  }
+  return { language: 'javascript' as const, entrypoint: value.runner.entrypoint };
 }
 function difficultyField(value: Record<string, unknown>) {
   const field = value.difficulty;

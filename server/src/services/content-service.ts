@@ -1,7 +1,7 @@
 import { encodeCursor } from '../cursor.js';
 import {
   ContentError, type AdminContentQuery, type ContentInput, type ContentRevision,
-  type ContentStatus, type PublishedContentQuery,
+  type ContentStatus, type PublicContentRevision, type PublishedContentQuery,
 } from '../content-domain.js';
 import type { ContentRepository } from '../repositories/content-repository.js';
 
@@ -46,7 +46,7 @@ export class ContentService {
     const items = rows.slice(0, query.limit);
     const last = items.at(-1);
     return {
-      items,
+      items: items.map(toPublicRevision),
       nextCursor: hasNext && last?.publishedAt
         ? encodeCursor({ id: last.id, publishedAt: last.publishedAt })
         : null,
@@ -54,8 +54,28 @@ export class ContentService {
     };
   }
 
-  async findPublished(id: string): Promise<ContentRevision | null> { return this.repository.findPublished(id); }
+  async findPublished(id: string): Promise<PublicContentRevision | null> {
+    const item = await this.repository.findPublished(id);
+    return item ? toPublicRevision(item) : null;
+  }
+  async findPublishedRaw(id: string): Promise<ContentRevision | null> { return this.repository.findPublished(id); }
   async listAdmin(query: AdminContentQuery): Promise<ContentRevision[]> { return this.repository.listAdmin(query); }
   async countPublished(): Promise<number> { return this.repository.countPublished(); }
   async close(): Promise<void> { await this.repository.close(); }
+}
+
+function toPublicRevision(item: ContentRevision): PublicContentRevision {
+  const payload = structuredClone(item.payload) as unknown as Record<string, unknown>;
+  if (item.type === 'video' && Array.isArray(payload.quiz)) {
+    payload.quiz = payload.quiz.map((value) => {
+      const question = value as Record<string, unknown>;
+      return { id: question.id, prompt: question.prompt, options: question.options };
+    });
+  }
+  if (item.type === 'task' && payload.runner && typeof payload.runner === 'object') {
+    const runner = payload.runner as Record<string, unknown>;
+    payload.runner = { language: runner.language, entrypoint: runner.entrypoint };
+  }
+  const { payload: _privatePayload, ...rest } = item;
+  return { ...rest, payload };
 }

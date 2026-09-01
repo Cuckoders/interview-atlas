@@ -23,7 +23,7 @@
       "predictiveBackGestureEnabled": true
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -43,7 +43,8 @@
           "color": "#146B4B",
           "defaultChannel": "preparation-plan"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

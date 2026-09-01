@@ -8,7 +8,7 @@ const skillNames = [
   'Playwright', 'Cypress', 'Selenium', 'Appium', 'REST', 'GraphQL', 'Git', 'SQL',
 ] as const;
 
-const specialtyPatterns: Array<[Specialty, RegExp]> = [
+const specialtyPatterns: [Specialty, RegExp][] = [
   ['QA', /\b(qa (?:engineer|automation|tester)|quality assurance (?:engineer|automation|tester)|software test(?:er|ing)?|test automation|sdet)\b/i],
   ['Mobile', /\b(android|ios|mobile|flutter|react native|kotlin|swift)\b/i],
   ['Frontend', /\b(front[ -]?end|react|vue|angular|javascript|typescript|ui developer)\b/i],

@@ -53,6 +53,8 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="question/[id]" options={{ title: 'Вопрос' }} />
             <Stack.Screen name="task/[id]" options={{ title: 'Задача' }} />
+            <Stack.Screen name="video/[id]" options={{ title: 'Видео' }} />
+            <Stack.Screen name="simulation/index" options={{ title: 'Симуляция интервью' }} />
             <Stack.Screen name="vacancy/[id]" options={{ title: 'Вакансия' }} />
             <Stack.Screen name="vacancy-match/[id]" options={{ title: 'Совпадение с вакансией' }} />
             <Stack.Screen name="vacancy-searches/index" options={{ title: 'Сохранённые поиски' }} />

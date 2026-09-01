@@ -2,8 +2,8 @@ const state = { token: '', items: [], selected: null };
 const $ = (id) => document.getElementById(id);
 const templates = {
   question: { shortAnswer: 'Краткий ответ', fullAnswer: 'Развёрнутый ответ', difficulty: 'Средний' },
-  task: { description: 'Условие задачи', difficulty: 'Средний', estimatedMinutes: 30, skills: ['TypeScript'], starterCode: '', solution: 'Разбор решения' },
-  video: { author: 'Автор', durationMinutes: 15, url: 'https://www.youtube.com/watch?v=example' },
+  task: { description: 'Условие задачи', difficulty: 'Средний', estimatedMinutes: 30, skills: ['TypeScript'], starterCode: 'function solve(value) {\n  return value;\n}', solution: 'Разбор решения', runner: { language: 'javascript', entrypoint: 'solve', tests: [{ name: 'пример', args: [2], expected: 2 }] } },
+  video: { author: 'Автор', durationMinutes: 15, url: 'https://example.com/video.mp4', quiz: [{ id: 'q1', prompt: 'Контрольный вопрос', options: ['Вариант A', 'Вариант B'], correctIndex: 0, explanation: 'Почему этот ответ верный.' }] },
   track: { description: 'Описание учебного трека', lessons: 8, durationMinutes: 240 },
 };
 

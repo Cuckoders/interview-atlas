@@ -12,6 +12,8 @@ const envSchema = z.object({
   CMS_ADMIN_TOKEN: z.string().min(32).max(256).optional(),
   AUTH_ACCESS_TTL_MS: z.coerce.number().int().min(60_000).max(86_400_000).default(900_000),
   AUTH_REFRESH_TTL_MS: z.coerce.number().int().min(86_400_000).max(7_776_000_000).default(2_592_000_000),
+  CODE_RUNNER_ENABLED: z.stringbool().default(false),
+  CODE_RUNNER_IMAGE: z.string().min(1).max(200).default('node:24-alpine'),
 });
 
 export type AppConfig = {
@@ -26,6 +28,8 @@ export type AppConfig = {
   cmsAdminToken?: string;
   authAccessTtlMs: number;
   authRefreshTtlMs: number;
+  codeRunnerEnabled?: boolean;
+  codeRunnerImage?: string;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -40,6 +44,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     sourceTimeoutMs: parsed.SOURCE_TIMEOUT_MS,
     authAccessTtlMs: parsed.AUTH_ACCESS_TTL_MS,
     authRefreshTtlMs: parsed.AUTH_REFRESH_TTL_MS,
+    codeRunnerEnabled: parsed.CODE_RUNNER_ENABLED,
+    codeRunnerImage: parsed.CODE_RUNNER_IMAGE,
   };
   if (parsed.DATABASE_URL) config.databaseUrl = parsed.DATABASE_URL;
   if (parsed.CMS_ADMIN_TOKEN) config.cmsAdminToken = parsed.CMS_ADMIN_TOKEN;

@@ -84,6 +84,51 @@ test('CMS validates workflow and HTTPS sources', async () => {
     payload: { ...content, sourceUrl: 'http://unsafe.example' },
   });
   assert.equal(invalid.statusCode, 400);
+  const duplicateQuiz = await app.inject({
+    method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` }, payload: {
+      ...content, type: 'video', title: 'Event Loop video', payload: {
+        author: 'QA Editor', durationMinutes: 10, url: 'https://example.com/video.mp4',
+        quiz: [
+          { id: 'order', prompt: 'Первый вопрос?', options: ['A', 'B'], correctIndex: 0, explanation: 'A' },
+          { id: 'order', prompt: 'Второй вопрос?', options: ['A', 'B'], correctIndex: 1, explanation: 'B' },
+        ],
+      },
+    },
+  });
+  assert.equal(duplicateQuiz.statusCode, 400);
+  const webpageVideo = await app.inject({
+    method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` }, payload: {
+      ...content, type: 'video', title: 'Непрямая ссылка на видео',
+      payload: { author: 'QA Editor', durationMinutes: 10, url: 'https://www.youtube.com/watch?v=example' },
+    },
+  });
+  assert.equal(webpageVideo.statusCode, 400);
+  const malformedVideo = await app.inject({
+    method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` }, payload: {
+      ...content, type: 'video', title: 'Некорректная ссылка на видео',
+      payload: { author: 'QA Editor', durationMinutes: 10, url: 'not a url' },
+    },
+  });
+  assert.equal(malformedVideo.statusCode, 400);
+  const oversizedRunnerStarter = await app.inject({
+    method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` }, payload: {
+      ...content, type: 'task', title: 'Слишком большой starter', payload: {
+        description: 'Условие', difficulty: 'Средний', estimatedMinutes: 20, skills: ['JavaScript'],
+        starterCode: 'x'.repeat(12_001), solution: 'Решение',
+        runner: { language: 'javascript', entrypoint: 'solve', tests: [{ name: 'пример', args: [1], expected: 1 }] },
+      },
+    },
+  });
+  assert.equal(oversizedRunnerStarter.statusCode, 400);
+  const reservedRunnerEntrypoint = await app.inject({
+    method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` }, payload: {
+      ...content, type: 'task', title: 'Недопустимое имя функции', payload: {
+        description: 'Условие', difficulty: 'Средний', estimatedMinutes: 20, skills: ['JavaScript'], solution: 'Решение',
+        runner: { language: 'javascript', entrypoint: 'this', tests: [{ name: 'пример', args: [], expected: 1 }] },
+      },
+    },
+  });
+  assert.equal(reservedRunnerEntrypoint.statusCode, 400);
   const created = await app.inject({
     method: 'POST', url: '/admin/content', headers: { authorization: `Bearer ${token}` }, payload: content,
   });

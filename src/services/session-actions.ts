@@ -17,17 +17,22 @@ import { initializePreparation } from '@/services/preparation-sync';
 import { clearPreparationOutbox } from '@/services/preparation-outbox';
 import { usePreparationStore } from '@/store/use-preparation-store';
 import { cancelPreparationReminders } from '@/services/reminder-service';
+import {
+  forgetLearningCacheOwner, hydrateLearningCacheOwner, purgeLearningCache, rememberLearningCacheOwner,
+} from '@/services/learning-lab-cache';
 
 const deviceName = `Interview Atlas ${Platform.OS}`;
 
 export async function bootstrapSession(): Promise<void> {
   await waitForProgressHydration();
+  await hydrateLearningCacheOwner();
   useSessionStore.getState().setRestoring();
   const user = await restoreAccountSession();
   if (!user) {
     useSessionStore.getState().setSignedOut();
     return;
   }
+  await rememberLearningCacheOwner(user.id);
   useSessionStore.getState().setSignedIn(user);
   await initializeCloudProgress();
   await initializePreparation();
@@ -38,6 +43,7 @@ export async function signIn(email: string, password: string): Promise<void> {
   useSessionStore.getState().setRestoring();
   try {
     const user = await loginRemoteAccount({ email, password, deviceName });
+    await rememberLearningCacheOwner(user.id);
     useSessionStore.getState().setSignedIn(user);
     await initializeCloudProgress();
     await initializePreparation();
@@ -52,6 +58,7 @@ export async function signUp(displayName: string, email: string, password: strin
   useSessionStore.getState().setRestoring();
   try {
     const user = await registerRemoteAccount({ displayName, email, password, deviceName });
+    await rememberLearningCacheOwner(user.id);
     useSessionStore.getState().setSignedIn(user);
     await initializeCloudProgress();
     await initializePreparation();
@@ -66,6 +73,7 @@ export async function signOut(): Promise<void> {
   await synchronizeProgress();
   forgetCloudProgress(userId);
   await logoutRemoteAccount();
+  await forgetLearningCacheOwner();
   useAppStore.getState().resetProgress();
   await cancelPreparationReminders().catch(() => undefined);
   usePreparationStore.getState().reset();
@@ -78,6 +86,8 @@ export async function removeAccount(password: string): Promise<void> {
   forgetCloudProgress(userId);
   if (userId) await clearOutbox(userId);
   if (userId) await clearPreparationOutbox(userId);
+  if (userId) await purgeLearningCache(userId);
+  await forgetLearningCacheOwner();
   useAppStore.getState().resetProgress();
   await cancelPreparationReminders().catch(() => undefined);
   usePreparationStore.getState().reset();

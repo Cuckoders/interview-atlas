@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
@@ -8,6 +9,7 @@ import { ScreenHeader } from '@/components/screen-header';
 import { SpecialtyPicker } from '@/components/specialty-picker';
 import { AppText } from '@/components/ui/app-text';
 import { Chip } from '@/components/ui/chip';
+import { PrimaryButton } from '@/components/ui/primary-button';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { useLearningFeed } from '@/hooks/use-learning-feed';
 import { useAppStore } from '@/store/use-app-store';
@@ -17,6 +19,7 @@ type DifficultyFilter = Difficulty | 'Все';
 
 export default function PracticeScreen() {
   const { colors } = useAppTheme();
+  const router = useRouter();
   const specialty = useAppStore((state) => state.specialty);
   const setSpecialty = useAppStore((state) => state.setSpecialty);
   const completedTaskIds = useAppStore((state) => state.completedTaskIds);
@@ -89,6 +92,7 @@ export default function PracticeScreen() {
           Выполнено всего: {completedTaskIds.length}
         </AppText>
       </View>
+      <View style={styles.simulationAction}><PrimaryButton label="Симуляция интервью" icon="mic-outline" secondary onPress={() => router.push('/simulation' as Href)} /></View>
     </>
   );
 
@@ -134,4 +138,5 @@ const styles = StyleSheet.create({
   summary: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 16, gap: 2 },
   empty: { paddingHorizontal: 20, paddingVertical: 36, gap: 8 },
   loader: { paddingVertical: 24 },
+  simulationAction: { paddingHorizontal: 20, paddingBottom: 18 },
 });

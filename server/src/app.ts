@@ -23,6 +23,11 @@ import { MemoryVacancyIntelligenceRepository } from './repositories/memory-vacan
 import { VacancyIntelligenceError } from './vacancy-intelligence-domain.js';
 import { registerVacancyIntelligenceRoutes } from './vacancy-intelligence-routes.js';
 import { VacancyIntelligenceService } from './services/vacancy-intelligence-service.js';
+import { MemoryLearningLabRepository } from './repositories/memory-learning-lab-repository.js';
+import { DisabledCodeRunner } from './services/code-runner.js';
+import { LearningLabError } from './learning-lab-domain.js';
+import { registerLearningLabRoutes } from './learning-lab-routes.js';
+import { LearningLabService } from './services/learning-lab-service.js';
 
 const querySchema = z.object({
   query: z.string().trim().max(100).optional(),
@@ -37,9 +42,13 @@ export async function buildApp(
   config: AppConfig, vacancyService: VacancyService, contentService: ContentService, accountService: AccountService,
   preparationService: PreparationService,
   vacancyIntelligenceService?: VacancyIntelligenceService,
+  learningLabService?: LearningLabService,
 ): Promise<FastifyInstance> {
   const intelligence = vacancyIntelligenceService ?? new VacancyIntelligenceService(
     new MemoryVacancyIntelligenceRepository(), vacancyService, accountService, preparationService,
+  );
+  const learning = learningLabService ?? new LearningLabService(
+    new MemoryLearningLabRepository(), contentService, new DisabledCodeRunner(),
   );
   const app = Fastify({
     logger: { level: config.logLevel, redact: ['req.headers.authorization'] },
@@ -95,9 +104,10 @@ export async function buildApp(
     return item;
   });
   await registerContentRoutes(app, config, contentService);
-  await registerAccountRoutes(app, accountService, preparationService, intelligence);
+  await registerAccountRoutes(app, accountService, preparationService, intelligence, learning);
   await registerPreparationRoutes(app, accountService, preparationService);
   await registerVacancyIntelligenceRoutes(app, accountService, intelligence);
+  await registerLearningLabRoutes(app, accountService, learning);
 
   app.setNotFoundHandler((_request, reply) => reply.code(404).send({ error: { code: 'not_found', message: 'Маршрут не найден' } }));
   app.setErrorHandler((error, request, reply) => {
@@ -116,6 +126,9 @@ export async function buildApp(
     if (error instanceof VacancyIntelligenceError) {
       return reply.code(error.statusCode).send({ error: { code: error.code, message: error.message } });
     }
+    if (error instanceof LearningLabError) {
+      return reply.code(error.statusCode).send({ error: { code: error.code, message: error.message } });
+    }
     if (error instanceof Error && error.message === 'Origin not allowed') {
       return reply.code(403).send({ error: { code: 'origin_forbidden', message: 'Источник запроса не разрешён' } });
     }
@@ -128,7 +141,7 @@ export async function buildApp(
   });
 
   app.addHook('onClose', async () => { await Promise.all([
-    vacancyService.close(), contentService.close(), accountService.close(), preparationService.close(), intelligence.close(),
+    vacancyService.close(), contentService.close(), accountService.close(), preparationService.close(), intelligence.close(), learning.close(),
   ]); });
   return app;
 }

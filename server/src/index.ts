@@ -23,6 +23,11 @@ import { MemoryVacancyIntelligenceRepository } from './repositories/memory-vacan
 import { PostgresVacancyIntelligenceRepository } from './repositories/postgres-vacancy-intelligence-repository.js';
 import type { VacancyIntelligenceRepository } from './repositories/vacancy-intelligence-repository.js';
 import { VacancyIntelligenceService } from './services/vacancy-intelligence-service.js';
+import { MemoryLearningLabRepository } from './repositories/memory-learning-lab-repository.js';
+import { PostgresLearningLabRepository } from './repositories/postgres-learning-lab-repository.js';
+import type { LearningLabRepository } from './repositories/learning-lab-repository.js';
+import { DisabledCodeRunner, DockerCodeRunner } from './services/code-runner.js';
+import { LearningLabService } from './services/learning-lab-service.js';
 
 const config = loadConfig();
 const repository: VacancyRepository = config.databaseUrl
@@ -47,7 +52,16 @@ const intelligenceRepository: VacancyIntelligenceRepository = config.databaseUrl
 const intelligenceService = new VacancyIntelligenceService(
   intelligenceRepository, service, accountService, preparationService,
 );
-const app = await buildApp(config, service, contentService, accountService, preparationService, intelligenceService);
+const learningRepository: LearningLabRepository = config.databaseUrl
+  ? new PostgresLearningLabRepository(config.databaseUrl)
+  : new MemoryLearningLabRepository();
+const codeRunner = config.codeRunnerEnabled
+  ? new DockerCodeRunner(config.codeRunnerImage ?? 'node:24-alpine')
+  : new DisabledCodeRunner();
+const learningService = new LearningLabService(learningRepository, contentService, codeRunner);
+const app = await buildApp(
+  config, service, contentService, accountService, preparationService, intelligenceService, learningService,
+);
 
 const shutdown = async (signal: string) => {
   app.log.info({ signal }, 'graceful shutdown');

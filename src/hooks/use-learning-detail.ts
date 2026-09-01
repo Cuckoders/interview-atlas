@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 
-import { practiceTasks, questions } from '@/data/mock-data';
+import { practiceTasks, questions, videoLessons } from '@/data/mock-data';
 import {
   apiLearningRepository, type LearningContentMap, type LearningContentType,
 } from '@/services/api-learning-repository';
 import { cacheLearningItem, readLearningItem } from '@/services/learning-cache';
 
-const details = { question: questions, task: practiceTasks } as const;
+const details = { question: questions, task: practiceTasks, video: videoLessons } as const;
 
-export function useLearningDetail<K extends Extract<LearningContentType, 'question' | 'task'>>(type: K, id?: string) {
+export function useLearningDetail<K extends Extract<LearningContentType, 'question' | 'task' | 'video'>>(type: K, id?: string) {
   const [state, setState] = useState<{ id?: string; item: LearningContentMap[K] | null | undefined }>(() => ({
     id, item: details[type].find((item) => item.id === id) as LearningContentMap[K] | undefined,
   }));

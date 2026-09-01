@@ -126,33 +126,37 @@ export const questions: InterviewQuestion[] = [
 export const videoLessons: VideoLesson[] = [
   {
     id: 'video-js-loop',
+    contentVersion: 1,
     title: 'Event Loop на схемах',
     author: 'Interview Atlas',
     durationMinutes: 14,
     specialty: 'Frontend',
-    url: 'https://example.com/videos/event-loop',
+    url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
   },
   {
     id: 'video-system-design',
+    contentVersion: 1,
     title: 'System design: с чего начать ответ',
     author: 'Interview Atlas',
     durationMinutes: 22,
     specialty: 'Backend',
-    url: 'https://example.com/videos/system-design',
+    url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
   },
   {
     id: 'video-mobile',
+    contentVersion: 1,
     title: 'Lifecycle без магии',
     author: 'Interview Atlas',
     durationMinutes: 16,
     specialty: 'Mobile',
-    url: 'https://example.com/videos/mobile-lifecycle',
+    url: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
   },
 ];
 
 export const practiceTasks: PracticeTask[] = [
   {
     id: 'debounce',
+    contentVersion: 1,
     title: 'Реализовать debounce',
     description: 'Напишите функцию, откладывающую вызов до окончания серии событий.',
     specialty: 'Frontend',
@@ -166,6 +170,7 @@ export const practiceTasks: PracticeTask[] = [
   },
   {
     id: 'lru-cache',
+    contentVersion: 1,
     title: 'LRU Cache за O(1)',
     description: 'Спроектируйте кеш с get/put за константное время.',
     specialty: 'Backend',
@@ -177,6 +182,7 @@ export const practiceTasks: PracticeTask[] = [
   },
   {
     id: 'feed-design',
+    contentVersion: 1,
     title: 'Спроектировать ленту вакансий',
     description: 'Опишите API, дедупликацию, курсоры и обновление сохранённых фильтров.',
     specialty: 'Backend',
@@ -188,6 +194,7 @@ export const practiceTasks: PracticeTask[] = [
   },
   {
     id: 'offline-sync',
+    contentVersion: 1,
     title: 'Offline-first список задач',
     description: 'Продумайте локальную запись, очередь синхронизации и конфликты.',
     specialty: 'Mobile',
@@ -199,6 +206,7 @@ export const practiceTasks: PracticeTask[] = [
   },
   {
     id: 'test-plan',
+    contentVersion: 1,
     title: 'Тест-план оплаты',
     description: 'Составьте риск-ориентированный набор проверок для нового checkout.',
     specialty: 'QA',
